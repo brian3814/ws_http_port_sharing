@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Chat Demo</title>
+    <style>
+        .chat-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+        }
+        .chat-box {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 5px;
+        }
+        button {
+            padding: 5px 15px;
+        }
+        .status {
+            color: #666;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-box">
+            <h3>Gateway Chat</h3>
+            <div class="status" id="gateway-status">Disconnected</div>
+            <div class="messages" id="gateway-messages"></div>
+            <div class="input-group">
+                <input type="text" id="gateway-input" placeholder="Type a message...">
+                <button onclick="sendGatewayMessage()">Send</button>
+            </div>
+        </div>
+
+        <div class="chat-box">
+            <h3>Backend Chat</h3>
+            <div class="status" id="backend-status">Disconnected</div>
+            <div class="messages" id="backend-messages"></div>
+            <div class="input-group">
+                <input type="text" id="backend-input" placeholder="Type a message...">
+                <button onclick="sendBackendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gatewayWs = null;
+        let backendWs = null;
+
+        function connectGateway() {
+            gatewayWs = new WebSocket('ws://localhost:3000/api/ws');
+            
+            gatewayWs.onopen = () => {
+                document.getElementById('gateway-status').textContent = 'Connected';
+                document.getElementById('gateway-status').style.color = 'green';
+            };
+
+            gatewayWs.onclose = () => {
+                document.getElementById('gateway-status').textContent = 'Disconnected';
+                document.getElementById('gateway-status').style.color = 'red';
+            };
+
+            gatewayWs.onmessage = (event) => {
+                const messages = document.getElementById('gateway-messages');
+                messages.innerHTML += `<div>${event.data}</div>`;
+                messages.scrollTop = messages.scrollHeight;
+            };
+        }
+
+        function connectBackend() {
+            backendWs = new WebSocket('ws://localhost:3000/service/ws');
+            
+            backendWs.onopen = () => {
+                document.getElementById('backend-status').textContent = 'Connected';
+                document.getElementById('backend-status').style.color = 'green';
+            };
+
+            backendWs.onclose = () => {
+                document.getElementById('backend-status').textContent = 'Disconnected';
+                document.getElementById('backend-status').style.color = 'red';
+            };
+
+            backendWs.onmessage = (event) => {
+                const messages = document.getElementById('backend-messages');
+                messages.innerHTML += `<div>${event.data}</div>`;
+                messages.scrollTop = messages.scrollHeight;
+            };
+        }
+
+        function sendGatewayMessage() {
+            const input = document.getElementById('gateway-input');
+            if (gatewayWs && input.value) {
+                gatewayWs.send(input.value);
+                input.value = '';
+            }
+        }
+
+        function sendBackendMessage() {
+            const input = document.getElementById('backend-input');
+            if (backendWs && input.value) {
+                backendWs.send(input.value);
+                input.value = '';
+            }
+        }
+
+        // Connect both WebSockets when page loads
+        connectGateway();
+        connectBackend();
+
+        // Add enter key support
+        document.getElementById('gateway-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendGatewayMessage();
+        });
+
+        document.getElementById('backend-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendBackendMessage();
+        });
+    </script>
+</body>
+</html>
