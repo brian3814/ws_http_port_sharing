@@ -6,7 +6,7 @@ const httpProxy = require('http-proxy');
 
 const app = express();
 const server = createServer(app);
-
+const port = 3000;
 // Main WebSocket server for the gateway
 const wss = new WebSocketServer({ noServer: true });
 
@@ -48,7 +48,7 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 function startGateway() {
-  server.listen(3000, () => {
+  server.listen(port, () => {
     console.log(`API Gateway running on port ${port}`);
   });
 }
